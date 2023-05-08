@@ -1,0 +1,87 @@
+---
+title: "CBO_Descript"
+author: "Pedro Leite"
+date: "2023-05-08"
+output: html_document
+---
+# Pacotes necessários
+```{r message=FALSE, warning=FALSE}
+library(here) # Ajuda a definir o diretório
+library(dplyr) # Pacote fundamental para funções de if else, mutate, group by e etc
+library(readr) # Ajuda a ler e converter artigos de diversas formas
+library(stringr) # Essencial para trabalhar com strings
+
+```
+
+# Subindo arquivos 
+
+```{r message=FALSE, warning=FALSE}
+perfil_ocupacional = read.csv(here("data/perfil_ocupacional.csv"), header = T)
+
+# Esta é uma base de dados do site basedosdados.org que conta com uma lista de códigos da CBO de 5 a 6 dígitos. A base conta com a grande área, ativididade e a descrição resumida de cada. 
+
+
+```
+
+## RCA com todas as descrições
+
+```{r}
+
+perfil_ocupacional$cbo2d = substr(perfil_ocupacional$cbo_2002, start = 1, stop = 2) # Aqui eu crio uma nova variável para os dois primeiros dígitos da CBO que correspondem ao SubGrupo principal. Para este pequeno projeto vou utilizar como exemplo os cargos de Dirigente, Diretores e Gerentes
+
+x = perfil_ocupacional %>%  
+  filter(cbo2d == "14" | cbo2d == "12" | cbo2d == "13")  %>% 
+  pull(descricao_atividade) %>% 
+  table()%>%
+  as.data.frame() %>%
+  arrange(desc(Freq)) 
+# Para os cargos em questão, crio uma tabela de frequência das descrições resumidas e atribuio ao objeto x
+
+y = perfil_ocupacional %>% 
+  pull(descricao_atividade) %>% 
+  table()%>%
+  as.data.frame() %>%
+  arrange(desc(Freq))
+# Agora crio uma tabela de frequência das descrições de todos os cargos. 
+
+
+total_freq =  sum(y$Freq)
+palavras_filtradas = y[y$. %in% x$., ]
+freq_cbo = sum(palavras_filtradas$Freq) 
+participacao_cbo = freq_cbo / total_freq
+freq_esperada = participacao_cbo * total_freq 
+x$rca = palavras_filtradas$Freq/freq_esperada
+# As últimas linhas representam o cálculo do RCA (Revealed comparative advantage) dos cargos de dirigentes, diretores e gerentes.  
+
+
+```
+
+## RCA com todas as descrições mas só de Gerentes (Código 14) para com os cargos 14, 12, 13
+
+```{r}
+x = perfil_ocupacional %>% 
+  filter(cbo2d == "14" | cbo2d == "12" | cbo2d == "13")  %>% 
+  pull(descricao_atividade) %>% 
+  table()%>%
+  as.data.frame() %>%
+  arrange(desc(Freq))
+
+z = perfil_ocupacional %>% 
+  filter(cbo2d == "14") %>% 
+  pull(descricao_atividade) %>% 
+  table()%>%
+  as.data.frame() %>%
+  arrange(desc(Freq))
+
+total_freq =  sum(x$Freq)
+palavras_filtradas = x[x$. %in% z$., ]
+freq_cbo = sum(palavras_filtradas$Freq) 
+participacao_cbo = freq_cbo / total_freq
+freq_esperada = participacao_cbo * total_freq
+
+z$rca = palavras_filtradas$Freq/freq_esperada
+
+
+```
+
+
